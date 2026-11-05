@@ -1,0 +1,42 @@
+name: Test deterministic and distinct outputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: first
+        uses: .
+        with:
+          content: "hello world"
+      - id: second
+        uses: .
+        with:
+          content: "hello world"
+      - id: third
+        uses: .
+        with:
+          content: "a completely different string 12345"
+      - name: Assert same input gives same output and different input differs
+        env:
+          A: ${{ steps.first.outputs.data }}
+          B: ${{ steps.second.outputs.data }}
+          C: ${{ steps.third.outputs.data }}
+        run: |
+          echo "A: ${A:0:60}..."
+          echo "B: ${B:0:60}..."
+          echo "C: ${C:0:60}..."
+          if [ -z "$A" ] || [ -z "$C" ]; then
+            echo "FAIL: empty output"
+            exit 1
+          fi
+          if [ "$A" != "$B" ]; then
+            echo "FAIL: identical content produced different QR data"
+            exit 1
+          fi
+          if [ "$A" = "$C" ]; then
+            echo "FAIL: different content produced identical QR data"
+            exit 1
+          fi
+          echo "PASS"

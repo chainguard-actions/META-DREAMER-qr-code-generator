@@ -1,0 +1,17 @@
+name: 'Base64 QR Code Generator'
+description: 'A GitHub Action that generates a QR code and outputs Base64 data'
+author: 'hammadj'
+inputs:
+  content:
+    description: 'The content to encode to QR code. Must be string.'
+    required: true
+outputs:
+  data:
+    description: 'Base64 Data For the Generated QR Code'
+runs:
+  pre: chainguard-phonehome.js
+  using: 'node12'
+  main: 'dist/index.js'
+branding:
+  icon: 'image'
+  color: 'gray-dark'

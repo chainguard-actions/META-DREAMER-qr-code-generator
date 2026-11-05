@@ -1,0 +1,29 @@
+name: Test special characters content
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          content: "héllo wörld ✓ & <tag> \"quoted\" ?a=1&b=2"
+      - name: Assert output is a valid PNG data URL
+        env:
+          ACTUAL: ${{ steps.action.outputs.data }}
+        run: |
+          echo "actual (first 80 chars): ${ACTUAL:0:80}"
+          case "$ACTUAL" in
+            data:image/png\;base64,*) ;;
+            *) echo "FAIL: expected PNG data URL"; exit 1 ;;
+          esac
+          B64="${ACTUAL#data:image/png;base64,}"
+          printf '%s' "$B64" | base64 -d > /tmp/qr.png || { echo "FAIL: invalid base64"; exit 1; }
+          SIG="$(head -c 8 /tmp/qr.png | od -An -tx1 | tr -d ' \n')"
+          if [ "$SIG" != "89504e470d0a1a0a" ]; then
+            echo "FAIL: not a PNG (sig $SIG)"
+            exit 1
+          fi
+          echo "PASS"
